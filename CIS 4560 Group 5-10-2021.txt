@@ -1,0 +1,488 @@
+--tweets_sentiment fields
+
+tweet_ID,user_ID,t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,valence_intensity,anger_intensity,fear_intensity
+,sadness_intensity,joy_intensity,sentiment_category,emotion_category,keyword_used,country_region,date_stamp
+
+
+-- world_vaccination fields
+location,iso_code,date,total_vaccinations,people_vaccinated,people_fully_vaccinated,daily_vaccinations_raw,
+daily_vaccinations,total_vaccinations_per_hundred,people_vaccinated_per_hundred,people_fully_vaccinated_per_hundred,daily_vaccinations_per_million
+
+--Covid19_case fields
+iso_code,continent,location,date,total_cases,new_cases,new_cases_smoothed,total_deaths,new_deaths,
+new_deaths_smoothed,total_cases_per_million,new_cases_per_million,new_cases_smoothed_per_million,
+total_deaths_per_million,new_deaths_per_million,new_deaths_smoothed_per_million,reproduction_rate,
+icu_patients,icu_patients_per_million,hosp_patients,hosp_patients_per_million,weekly_icu_admissions,
+weekly_icu_admissions_per_million,weekly_hosp_admissions,weekly_hosp_admissions_per_million,new_tests,
+total_tests,total_tests_per_thousand,new_tests_per_thousand,new_tests_smoothed,new_tests_smoothed_per_thousand,
+positive_rate,tests_per_case,tests_units,total_vaccinations,people_vaccinated,people_fully_vaccinated,
+new_vaccinations,new_vaccinations_smoothed,total_vaccinations_per_hundred,
+people_vaccinated_per_hundred,people_fully_vaccinated_per_hundred,new_vaccinations_smoothed_per_million,
+stringency_index,population,population_density,median_age,aged_65_older,aged_70_older,gdp_per_capita,
+extreme_poverty,cardiovasc_death_rate,diabetes_prevalence,female_smokers,male_smokers,handwashing_facilities,
+hospital_beds_per_thousand,life_expectancy,human_development_index
+
+-- file names
+Covid19_case.csv
+
+tweetid_sentiments.csv
+
+Vaccination.csv
+
+world_vaccination.csv
+
+
+--Google drive link
+https://drive.google.com/file/d/1GDLgobvZK_tVDiZgF3otgzyOtIkvWZAA/view?usp=sharing
+
+ssh jlee464@129.150.64.74
+
+-small file from google drive
+wget --no-check-certificate 'https://docs.google.com/uc?export=download&id=1GDLgobvZK_tVDiZgF3otgzyOtIkvWZAA' -O group.zip
+
+-large file over 100mb from google drive
+wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=1GDLgobvZK_tVDiZgF3otgzyOtIkvWZAA' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1GDLgobvZK_tVDiZgF3otgzyOtIkvWZAA" -O group.zip && rm -rf /tmp/cookies.txt
+
+--upzip file
+unzip group.zip
+
+ls
+
+--create folders for each files
+hdfs dfs -mkdir group_work
+hdfs dfs -mkdir group_work/Covid19_case
+hdfs dfs -mkdir group_work/tweetid_sentiments
+hdfs dfs -mkdir group_work/Vaccination
+hdfs dfs -mkdir group_work/world_vaccination
+
+--check folders
+hdfs dfs -ls
+hdfs dfs -ls group_work/
+hdfs dfs -ls group_work/Covid19_case
+hdfs dfs -ls group_work/tweetid_sentiments
+hdfs dfs -ls group_work/Vaccination
+hdfs dfs -ls group_work/world_vaccination
+
+--put file to each folders
+hdfs dfs -put Covid19_case.csv group_work/Covid19_case
+hdfs dfs -put tweetid_sentiments.csv group_work/tweetid_sentiments
+hdfs dfs -put Vaccination.csv group_work/Vaccination
+hdfs dfs -put world_vaccination.csv group_work/world_vaccination
+
+-- check files
+hdfs dfs -ls group_work
+hdfs dfs -ls group_work/Covid19_case
+hdfs dfs -ls group_work/tweetid_sentiments
+hdfs dfs -ls group_work/Vaccination
+hdfs dfs -ls group_work/world_vaccination
+
+--assign write permit
+hdfs dfs -chmod -R o+w .
+
+--open new terminal for beeline
+beeline
+
+!connect jdbc:hive2://bigdai-nov-bdcsce-1:2181,bigdai-nov-bdcsce-2:2181,bigdai-nov-bdcsce-3:2181/;serviceDiscoveryMode=zooKeeper;zooKeeperNamespace=hiveserver2?tez.queue.name=interactive  bdcsce_admin 
+
+--use own database
+use jlee464;
+
+--create table for Covid19_case
+drop table if exists Covid19_case;
+
+CREATE EXTERNAL TABLE IF NOT EXISTS Covid19_case(
+iso_code STRING,
+continent STRING, 
+location STRING, 
+`date` STRING, 
+total_cases BIGINT, 
+new_cases BIGINT, 
+new_cases_smoothed BIGINT, 
+total_deaths BIGINT, 
+new_deaths BIGINT,
+new_deaths_smoothed FLOAT, 
+total_cases_per_million FLOAT, 
+new_cases_per_million FLOAT, 
+new_cases_smoothed_per_million FLOAT, 
+total_deaths_per_million FLOAT, 
+new_deaths_per_million FLOAT, 
+new_deaths_smoothed_per_million FLOAT, 
+reproduction_rate FLOAT,
+icu_patients BIGINT, 
+icu_patients_per_million FLOAT, 
+hosp_patients BIGINT, 
+hosp_patients_per_million FLOAT, 
+weekly_icu_admissions FLOAT, 
+weekly_icu_admissions_per_million FLOAT, 
+weekly_hosp_admissions FLOAT, 
+weekly_hosp_admissions_per_million FLOAT, 
+new_tests BIGINT,
+total_tests BIGINT, 
+total_tests_per_thousand FLOAT, 
+new_tests_per_thousand FLOAT, 
+new_tests_smoothed FLOAT, 
+new_tests_smoothed_per_thousand FLOAT,
+positive_rate FLOAT, 
+tests_per_case FLOAT, 
+tests_units STRING, 
+total_vaccinations FLOAT, 
+people_vaccinated BIGINT, 
+people_fully_vaccinated BIGINT,
+new_vaccinations BIGINT,
+new_vaccinations_smoothed FLOAT,
+total_vaccinations_per_hundred FLOAT,
+people_vaccinated_per_hundred FLOAT,
+people_fully_vaccinated_per_hundred FLOAT,
+new_vaccinations_smoothed_per_million BIGINT,
+stringency_index FLOAT, 
+population BIGINT, 
+population_density FLOAT, 
+median_age FLOAT,
+aged_65_older FLOAT, 
+aged_70_older FLOAT,
+gdp_per_capita FLOAT,
+extreme_poverty FLOAT,
+cardiovasc_death_rate FLOAT, 
+diabetes_prevalence FLOAT, 
+female_smokers FLOAT, 
+male_smokers FLOAT, 
+handwashing_facilities FLOAT,
+hospital_beds_per_thousand FLOAT, 
+life_expectancy FLOAT, 
+human_development_index FLOAT) 
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ',' 
+STORED AS TEXTFILE 
+LOCATION '/user/jlee464/group_work/Covid19_case' 
+TBLPROPERTIES ('skip.header.line.count'='1');
+
+--test Covid19_case table
+SELECT * from Covid19_case limit 3;
+
+--create mapreduced table Covid19_case table and chagne date type from string to date
+drop table if exists covid19_case_sample1;
+
+CREATE TABLE if not exists covid19_case_sample1
+AS SELECT iso_code,
+location, 
+cast(`date` as date) as `date`, 
+total_cases, 
+new_cases,
+total_deaths,
+new_deaths,
+total_cases_per_million, 
+new_cases_per_million, 
+total_deaths_per_million,
+new_deaths_per_million,
+population
+from Covid19_case 
+order by location ASC;
+
+--test Covid19_case_sample1 table
+SELECT DISTINCT * from Covid19_case_sample1 order by location ASC limit 10;
+
+SELECT DISTINCT * from Covid19_case_sample1 order by location ASC limit 10;
+
+SELECT * from Covid19_case_sample1 where location == "Afghanistan" limit 100;
+
+SELECT * from Covid19_case_sample1 where `date` == "2020-02-24";
+
+SELECT * from Covid19_case_sample1 order by location, `date` limit 10;
+
+--create table and load data from world_vaccination
+drop table if exists world_vaccination;
+
+CREATE EXTERNAL TABLE IF NOT EXISTS world_vaccination(location STRING,
+iso_code STRING, 
+`date` STRING, 
+total_vaccinations BIGINT, 
+people_vaccinated BIGINT, 
+people_fully_vaccinated BIGINT, 
+daily_vaccinations_raw BIGINT, 
+daily_vaccinations BIGINT, 
+total_vaccinations_per_hundred STRING, 
+people_vaccinated_per_hundred STRING, 
+people_fully_vaccinated_per_hundred STRING, 
+daily_vaccinations_per_million STRING) 
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ',' 
+STORED AS TEXTFILE 
+LOCATION '/user/jlee464/group_work/world_vaccination' 
+TBLPROPERTIES ('skip.header.line.count'='1');
+
+select * from world_vaccination limit 3;
+
+--create mapreduced world_vac_sample1 table and change date type from string to date
+drop table if exists world_vac_sample1;
+
+CREATE TABLE if not exists world_vac_sample1
+AS SELECT
+location,
+iso_code, 
+to_date(from_unixtime(unix_timestamp(`date`,'MM/dd/yyyy'),'yyyy-MM-dd')) as `date`, 
+total_vaccinations, 
+people_vaccinated, 
+people_fully_vaccinated, 
+total_vaccinations_per_hundred, 
+people_vaccinated_per_hundred, 
+people_fully_vaccinated_per_hundred
+from world_vaccination
+order by location ASC;
+
+--test world_vac_sample1 table
+select * from world_vac_sample1 order by location,`date` limit 10;
+
+--join tables
+drop table if exists vac_case;
+
+CREATE TABLE IF NOT EXISTS vac_case
+AS SELECT 
+c.location,
+c.`date`,
+c.total_cases, 
+c.new_cases,
+c.total_deaths,
+c.new_deaths,
+c.total_cases_per_million, 
+c.new_cases_per_million, 
+c.total_deaths_per_million,
+c.new_deaths_per_million,
+c.population,
+v.people_fully_vaccinated_per_hundred
+from covid19_case_sample1 as c 
+LEFT OUTER JOIN world_vac_sample1 as v
+WHERE c.location = v.location
+AND c.`date` = v.`date`;
+
+--test join table
+SELECT * from vac_case where location = 'United States';
+
+select * from vac_case order by location,`date` limit 10;
+
+-- create tweetid_sentiments table
+CREATE EXTERNAL TABLE IF NOT EXISTS tweetid_sentiments(
+tweet_ID STRING, 
+user_ID STRING, 
+t1 STRING, 
+t2 STRING, 
+t3 STRING, 
+t4 STRING, 
+t5 STRING, 
+t6 STRING, 
+t7 STRING, 
+t8 STRING, 
+t9 STRING, 
+t10 STRING, 
+valence_intensity FLOAT, 
+anger_intensity FLOAT, 
+fear_intensity FLOAT, 
+sadness_intensity FLOAT,
+joy_intensity FLOAT, 
+sentiment_category STRING, 
+emotion_category STRING,
+keyword_used STRING, 
+country_region STRING, 
+date_stamp STRING) 
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ',' 
+STORED AS TEXTFILE 
+LOCATION '/user/jlee464/group_work/tweetid_sentiments' 
+TBLPROPERTIES ('skip.header.line.count'='1');
+
+SELECT * from tweetid_sentiments limit 3;
+
+--create small table for tweetid_sentiments for testing
+drop table if exists tweet_sample;
+
+CREATE TABLE IF NOT EXISTS tweet_sample
+AS SELECT 
+country_region,
+date_stamp,
+sentiment_category, 
+count(sentiment_category) as cnt
+from tweetid_sentiments
+group by country_region,
+date_stamp,
+sentiment_category
+limit 5;
+
+SELECT * FROM tweet_sample;
+
+-- create table for count sentiment_category
+drop table if exists tweets_cnt;
+
+CREATE TABLE if not exists tweets_cnt
+AS SELECT 
+country_region,
+date_stamp, 
+sentiment_category, 
+count(sentiment_category) as cnt 
+from tweetid_sentiments 
+group by country_region, date_stamp, sentiment_category
+order by date_stamp ASC; 
+
+--test tweets_cnt table
+SELECT * from tweets_cnt order by date_stamp, sentiment_category limit 10;
+
+--download a file form world_vac_sample1 table to HDFS
+INSERT OVERWRITE DIRECTORY '/user/jlee464/group_work/world_vaccination/' 
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ',' 
+SELECT * FROM world_vac_sample1 
+order by location, `date`;
+
+--back to bash
+hdfs dfs -ls group_work/world_vaccination/ 
+
+hdfs dfs -get group_work/world_vaccination/000000_0 world_vac_sample1.csv
+
+ls
+
+cat world_vac_sample1.csv | tail -n 2
+
+scp jlee464@129.150.64.74:/home/jlee464/world_vac_sample1.csv .
+
+--open the file with Excel then change date format as Short Date to match with other files
+
+--delete 000000_0 and world_vac_sample1.csv to avoid corrupt file
+hdfs dfs -rm -R group_work/world_vaccination/000000_0
+
+rm world_vac_sample1.csv
+
+--download a file form Covid19_case_sample1 table to HDFS
+INSERT OVERWRITE DIRECTORY '/user/jlee464/group_work/Covid19_case/' 
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ',' 
+SELECT * FROM Covid19_case_sample1 
+order by location, `date`;
+
+--back to bash
+hdfs dfs -ls group_work/Covid19_case/ 
+
+hdfs dfs -get group_work/Covid19_case/000000_0 Covid19_case_sample1.csv
+
+ls
+
+cat Covid19_case_sample1.csv | tail -n 2
+
+--open new terminal then download file to local computer
+scp jlee464@129.150.64.74:/home/jlee464/Covid19_case_sample1.csv .
+
+--delete 000000_0 and Covid19_case_sample1.csv to avoid corrupt file
+hdfs dfs -rm -R group_work/Covid19_case/000000_0
+
+rm Covid19_case_sample1.csv
+
+--download a file form tweets_cnt table to HDFS
+INSERT OVERWRITE DIRECTORY '/user/jlee464/group_work/tweetid_sentiments/' 
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ',' 
+SELECT * FROM tweets_cnt 
+order by date_stamp, sentiment_category;
+
+--back to bash
+hdfs dfs -ls group_work/tweetid_sentiments/
+
+hdfs dfs -get group_work/tweetid_sentiments/000000_0 tweets_cnt.csv
+
+ls
+
+cat tweets_cnt.csv | tail -n 2
+
+scp jlee464@129.150.64.74:/home/jlee464/tweets_cnt.csv .
+
+--open the file with Excel then change date format as Short Date to match with other files
+
+--delete 000000_0 and tweets_cnt.csv to avoid corrupt file
+hdfs dfs -rm -R group_work/tweetid_sentiments/000000_0
+
+rm tweets_cnt.csv
+
+--download a file form vac_case table to HDFS
+INSERT OVERWRITE DIRECTORY '/user/jlee464/group_work/' 
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ',' 
+SELECT * FROM vac_case 
+order by location;
+
+--back to bash
+hdfs dfs -ls group_work/
+
+hdfs dfs -get group_work/000000_0 vac_case.csv
+
+ls
+
+cat vac_case.csv | tail -n 2
+
+--open new terminal to download file to local computer
+scp jlee464@129.150.64.74:/home/jlee464/vac_case.csv .
+
+--open the file with Excel then change date format as Short Date to match with other files
+
+--delete 000000_0 and tweets_cnt.csv to avoid corrupt file
+hdfs dfs -rm -R group_work/000000_0
+
+rm vac_case.csv
+
+-- add column names thru notepad for world_vac_sample1.csv
+location,
+iso_code,
+date,
+total_vaccinations,
+people_vaccinated,
+people_fully_vaccinated,
+total_vaccinations_per_hundred,
+people_vaccinated_per_hundred,
+people_fully_vaccinated_per_hundred,
+population
+
+-- add column names thru notepad for Covid19_case_sample1.csv
+iso_code,
+location,
+date,
+total_cases,
+new_cases,
+total_deaths,
+new_deaths,
+total_cases_per_million,
+new_cases_per_million,
+total_deaths_per_million,
+new_deaths_per_million,
+population
+
+-- add column names thru notepad for tweets_cnt.csv
+country,
+date_stamp,
+sentiment_category,
+cnt
+
+-- add column names thru notepad for vac_case.csv
+location,
+`date`,
+total_cases, 
+new_cases,
+total_deaths,
+new_deaths,
+total_cases_per_million, 
+new_cases_per_million, 
+total_deaths_per_million,
+new_deaths_per_million,
+population,
+people_fully_vaccinated_per_hundred
+
+SELECT 
+c.location,
+c.`date`,
+c.total_cases, 
+c.new_cases,
+c.total_deaths,
+c.new_deaths,
+c.total_cases_per_million, 
+c.new_cases_per_million, 
+c.total_deaths_per_million,
+c.new_deaths_per_million,
+c.population,
+v.people_fully_vaccinated_per_hundred
+from covid19_case_sample1 as c 
+left outer JOIN world_vac_sample1 as v
+WHERE c.location = v.location
+AND c.`date` = v.`date` 
+limit 20;
+
+
+--chage datetype
+select cast(`date` as date) from covid19_case limit 10;
+select to_date(from_unixtime(unix_timestamp(`date`,'MM/dd/yyyy'),'yyyy-MM-dd')) as `date` from world_vaccination;
